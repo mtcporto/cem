@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa do Cemitério</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        rect:not(.fundo), path {
+            transition: opacity 0.3s;
+            cursor: pointer;
+        }
+        
+        rect:not(.fundo):hover, path:hover {
+            opacity: 0.8;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        #infoPanel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 300px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-container input {
+            padding-left: 35px;
+        }
+        .small, small {
+    font-size: 0;
+}
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Mapa do Cemitério</h5>
+                        <div class="search-container">
+                            <i class="bi bi-search"></i>
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                class="form-control" 
+                                placeholder="Buscar por ID ou proprietário..."
+                            >
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="position-relative">
+                            <svg
+                                width="100%"
+                                height="600"
+                                viewBox="0 0 2283 1048"
+                                id="cemetery-map"
+                            >
+                                <rect width="2283" height="1048" fill="#f8f9fa" />
+                            </svg>
+                            <div id="infoPanel"></div>
+                        </div>
+                        <div class="d-flex mt-3">
+                            <div class="legend-item">
+                                <div class="legend-color bg-danger"></div>
+                                <span>Ocupado</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color bg-success"></div>
+                                <span>Livre</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color bg-primary"></div>
+                                <span>Selecionado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados dos jazigos inseridos diretamente para evitar problemas de CORS
+        let plotsData = {
+            "plots": [
+  {
+    "id": "L01Q01J01",
+    "path": "M209 750.124L370 730L356.5 649L551 617L568.5 697.5L821.5 661L853.875 869.67L242.774 965.5L209 750.124Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Silva"
+    }
+  },
+  {
+    "id": "L01Q01J02",
+    "path": "M832.395 896.208L1073.9 896.208L1073.9 998.208L832.395 998.208Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L01Q01J03",
+    "path": "M1062.96 655.554H1137V887.554H1062.96V655.554Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Santos"
+    }
+  },
+  {
+    "id": "L01Q02J01",
+    "path": "M849.5 685L1055.71 672L1063.2 813.802L930.5 813.802L927.5 769.5L840.5 772.5L837 719L851.5 717L849.5 685Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L01Q02J02",
+    "path": "M1193 711H1377V975.5L1226 978V919H1193V711Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Oliveira"
+    }
+  },
+  {
+    "id": "L01Q03J01",
+    "path": "M135 215L293 200.5L302 302L255 307.5L260 382L152.5 396.5L135 215Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L01Q03J02",
+    "path": "M321 120H474.5L478 304L326 311.5L321 120Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Pereira"
+    }
+  },
+  {
+    "id": "L01Q03J03",
+    "path": "M484 120H612V320H484V120Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L02Q01J01",
+    "path": "M620 190L746 180L759 362L633.5 370.5L620 190Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Costa"
+    }
+  },
+  {
+    "id": "L02Q01J02",
+    "path": "M745.5 99L795.5 96.5L799 144.5L887 142L902 362.5L782 370L769 183.5H751.5L745.5 99Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L02Q01J03",
+    "path": "M930 106L1057 103.5L1069 459L941 461.5L930 106Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Souza"
+    }
+  },
+  {
+    "id": "L02Q02J01",
+    "path": "M1058 96L1201 86L1205.5 193L1158 196.5L1162 234.5L1201 232L1214 417L1080 423.5L1058 96Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L02Q02J02",
+    "path": "M154 405L320.5 378L347 563L177.5 585L154 405Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Rodrigues"
+    }
+  },
+  {
+    "id": "L02Q02J03",
+    "path": "M347 358L471.5 349.5L488.5 550.5L361.5 559.5L347 358Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L03Q01J01",
+    "path": "M549.5 352.5L607.5 349L625.5 575.5L554.5 581.5L549.5 538H526.5V514.5L489.5 518.5L483.5 430H507V410H530.5V376.5L549.5 373V352.5Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Almeida"
+    }
+  },
+  {
+    "id": "L03Q01J02",
+    "path": "M639 378H755.5V536H639V378Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L03Q01J03",
+    "path": "M761.5 374L909.5 365L918 553L766 562.5L761.5 374Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Lima"
+    }
+  },
+  {
+    "id": "L03Q02J01",
+    "path": "M917.5 467.5L1063 464L1066 549L923.5 558.5L917.5 467.5Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L03Q02J02",
+    "path": "M1080 536L1219.5 519L1229 607L1092 624.5L1080 536Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Ferreira"
+    }
+  },
+  {
+    "id": "L03Q02J03",
+    "path": "M1242 381L1364.5 375.5L1371 497L1248 502.5L1242 381Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L03Q03J01",
+    "path": "M1289 103H1343V205H1289V103Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Ribeiro"
+    }
+  },
+  {
+    "id": "L04Q01J01",
+    "path": "M1361 64H1502V183.5H1476V247H1361V64Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L04Q01J02",
+    "path": "M1506 94H1634L1644 320L1509 322L1506 94Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Carvalho"
+    }
+  },
+  {
+    "id": "L04Q01J03",
+    "path": "M1639 78L1756 74L1769 304H1749V336H1783L1791.5 506L1662 511.5L1659 434.5L1690 433L1683.5 309.5L1649.5 314L1639 78Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L04Q02J01",
+    "path": "M1792 103L1946 97.5L1963 295L1939.5 327L1837 336V417L1859.5 423L1810 487L1792 103Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Martins"
+    }
+  },
+  {
+    "id": "L04Q02J02",
+    "path": "M1979 282L2023.5 289.5L2004 393.5L1942.5 504L1810 492.5L1979 282Z",
+    "info": {
+      "status": "Livre",
+      "owner": "-"
+    }
+  },
+  {
+    "id": "L04Q02J03",
+    "path": "M2028 291L2162 311L2143 452L2162 457.5L2152.5 533.5L2143 593L2001 572.5L2009 515L1992 512L2028 291Z",
+    "info": {
+      "status": "Ocupado",
+      "owner": "Família Gomes"
+    }
+  }
+]
+        };
+
+        let selectedPlot = null;
+
+        function getPlotColor(plot) {
+            if (selectedPlot === plot.id) return '#0d6efd';
+            return plot.info.status === 'Ocupado' ? '#dc3545' : '#198754';
+        }
+
+        function showInfoPanel(plot) {
+            const panel = document.getElementById('infoPanel');
+            panel.innerHTML = `
+                <h6 class="fw-bold mb-2">Jazigo ${plot.id}</h6>
+                <p class="mb-1">Status: ${plot.info.status}</p>
+                <p class="mb-0">Proprietário: ${plot.info.owner}</p>
+            `;
+            panel.style.display = 'block';
+        }
+
+        function updateMap(searchTerm = '') {
+            const svg = document.getElementById('cemetery-map');
+            svg.innerHTML = '<rect width="2283" height="1048" fill="#f8f9fa" />';
+
+            const filteredPlots = plotsData.plots.filter(plot => 
+                plot.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                plot.info.owner.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            filteredPlots.forEach(plot => {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute('d', plot.path);
+                path.setAttribute('fill', getPlotColor(plot));
+                path.setAttribute('stroke', '#000');
+                path.setAttribute('stroke-width', '1');
+                path.setAttribute('opacity', '0.9');
+                
+                path.addEventListener('click', () => {
+                    selectedPlot = plot.id;
+                    showInfoPanel(plot);
+                    updateMap(searchTerm);
+                });
+
+                svg.appendChild(path);
+
+                // Adiciona o texto do ID
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.textContent = plot.id;
+                text.setAttribute('x', plot.id.includes('L01') ? '400' : '900');
+                text.setAttribute('y', plot.id.includes('Q01') ? '800' : '900');
+                text.setAttribute('class', 'small');
+                text.setAttribute('fill', '#000');
+                svg.appendChild(text);
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            updateMap(e.target.value);
+        });
+
+        // Inicialização
+        updateMap();
+    </script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
